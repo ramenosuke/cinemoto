@@ -1,6 +1,8 @@
 # cinemoto
-*CS0043L Project*
+CS0043L Project
+
+**Group Members:**
 - Asher Ian Bautista
 - Jaimin Judd Roces
-- Taysian Exequiel Santos
 - Edriane Sagpang
+- Taysian Exequiel Santos
