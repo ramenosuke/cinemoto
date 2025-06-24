@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/auth_check.php';
+require_once '../includes/db_connect.php';
 
 session_start();
 
@@ -7,35 +8,35 @@ session_start();
 $movie_id = $_GET['movie'] ?? null;
 $showtime = $_GET['time'] ?? null;
 
-// Sample movie data (in a real application, this would come from a database)
-$movies = [
-    1 => [
-        'title' => 'Lilo And Stitch',
-        'image' => '../assets/lilo.jpg',
-        'price' => 350,
-        'synopsis' => 'The wildly funny and touching story of a lonely Hawaiian girl and the fugitive alien who helps to mend her broken family.'
-    ],
-    2 => [
-        'title' => 'Thunderbolts',
-        'image' => '../assets/thunderbolts.jpeg',
-        'price' => 350,
-        'synopsis' => 'Ensnared in a death trap, an unconventional team of antiheroes -- Yelena Belova, Bucky Barnes, Red Guardian, Ghost, Taskmaster and John Walker -- embarks on a dangerous mission that forces them to confront the darkest corners of their pasts.'
-    ],
-    3 => [
-        'title' => 'Karate Kid',
-        'image' => '../assets/karate.jpg',
-        'price' => 350,
-        'synopsis' => 'After kung fu prodigy Li Fong relocates to New York City, he attracts unwanted attention from a local karate champion and embarks on a journey to enter the ultimate karate competition with the help of Mr. Han and Daniel LaRusso.'
-    ]
-];
-
-// Validate movie ID
-if (!isset($movies[$movie_id])) {
+// Fetch movie info from DB
+$movieStmt = $pdo->prepare('SELECT * FROM movies WHERE movie_id = ?');
+$movieStmt->execute([$movie_id]);
+$movieRow = $movieStmt->fetch();
+if (!$movieRow) {
     header("Location: movies.php");
     exit;
 }
+$movie = [
+    'title' => $movieRow['title'],
+    'image' => $movieRow['image_path'],
+    'price' => $movieRow['price'],
+    'synopsis' => '' // Add if you have it in DB
+];
 
-$movie = $movies[$movie_id];
+// Get schedule_id for this movie and showtime (today)
+$scheduleStmt = $pdo->prepare('SELECT * FROM schedules WHERE movie_id = ? AND showtime = ? AND showdate = CURDATE()');
+$scheduleStmt->execute([$movie_id, date('H:i:s', strtotime($showtime))]);
+$schedule = $scheduleStmt->fetch();
+if (!$schedule) {
+    header("Location: movies.php");
+    exit;
+}
+$schedule_id = $schedule['schedule_id'];
+
+// Fetch already booked seats for this schedule
+$bookedSeatsStmt = $pdo->prepare('SELECT seat_number FROM booked_seats WHERE schedule_id = ?');
+$bookedSeatsStmt->execute([$schedule_id]);
+$bookedSeats = $bookedSeatsStmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Generate seat layout
 $rows = range('A', 'J');
@@ -45,24 +46,35 @@ $selected_seats = [];
 // Handle seat selection
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_seats'])) {
     $selected_seats = $_POST['selected_seats'];
-    
-    // Add to cart
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
+    // Prevent double booking: check if any selected seat is already booked
+    $conflict = false;
+    foreach ($selected_seats as $seat) {
+        if (in_array($seat, $bookedSeats)) {
+            $conflict = true;
+            break;
+        }
     }
-    
-    $_SESSION['cart'][] = [
-        'movie' => $movie['title'],
-        'image' => $movie['image'],
-        'date' => date('Y-m-d'),
-        'time' => $showtime,
-        'seats' => implode(', ', $selected_seats),
-        'price' => $movie['price'],
-        'quantity' => count($selected_seats)
-    ];
-    
-    header("Location: cart.php");
-    exit;
+    if ($conflict) {
+        $error = "One or more selected seats are already booked. Please choose different seats.";
+    } else {
+        // Add to cart (or book directly as needed)
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
+        $_SESSION['cart'][] = [
+            'movie' => $movie['title'],
+            'image' => $movie['image'],
+            'date' => date('Y-m-d'),
+            'time' => $showtime,
+            'schedule_id' => $schedule_id,
+            'seats' => implode(', ', $selected_seats),
+            'seat_array' => $selected_seats,
+            'price' => $movie['price'],
+            'quantity' => count($selected_seats)
+        ];
+        header("Location: cart.php");
+        exit;
+    }
 }
 ?>
 
@@ -99,9 +111,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_seats'])) {
                     <div class="row">
                         <div class="row-label"><?php echo $row; ?></div>
                         <div class="seats">
-                            <?php for ($i = 1; $i <= $seats_per_row; $i++): ?>
-                                <label class="seat">
-                                    <input type="checkbox" name="selected_seats[]" value="<?php echo $row . $i; ?>">
+                            <?php for ($i = 1; $i <= $seats_per_row; $i++): 
+                                $seatVal = $row . $i;
+                                $isOccupied = in_array($seatVal, $bookedSeats);
+                            ?>
+                                <label class="seat <?php echo $isOccupied ? 'occupied' : ''; ?>">
+                                    <input type="checkbox" name="selected_seats[]" value="<?php echo $seatVal; ?>" <?php echo $isOccupied ? 'disabled' : ''; ?>>
                                     <span class="seat-number"><?php echo $i; ?></span>
                                 </label>
                             <?php endfor; ?>
@@ -135,6 +150,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_seats'])) {
                     <div id="total-price">₱0.00</div>
                 </div>
             </div>
+
+            <?php if (!empty($error)): ?>
+                <div class="error-message" style="color:red; text-align:center; margin:10px 0;">
+                    <?php echo $error; ?>
+                </div>
+            <?php endif; ?>
 
             <button type="submit" class="proceed-btn" disabled>Proceed to Checkout</button>
         </form>

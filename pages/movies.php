@@ -1,56 +1,44 @@
 <?php
 require_once '../includes/auth_check.php';
+require_once '../includes/db_connect.php';
 
 session_start();
 
-// Sample movie data (in a real application, this would come from a database)
-$movies = [
-    [
-        'id' => 1,
-        'title' => 'Lilo & Stitch: The Lost Adventure',
-        'image' => '../assets/lilo.jpg',
-        'description' => 'The wildly funny and touching story of a lonely Hawaiian girl and the fugitive alien who helps to mend her broken family.',
-        'duration' => '1h 48m',
-        'rating' => 'PG',
-        'price' => 350,
-        'showtimes' => [
-            ['time' => '10:00 AM', 'seats' => 45],
-            ['time' => '1:30 PM', 'seats' => 30],
-            ['time' => '4:45 PM', 'seats' => 25],
-            ['time' => '8:00 PM', 'seats' => 20]
-        ]
-    ],
-    [
-        'id' => 2,
-        'title' => 'Thunderbolts',
-        'image' => '../assets/thunderbolts.jpeg',
-        'description' => 'Ensnared in a death trap, an unconventional team of antiheroes -- Yelena Belova, Bucky Barnes, Red Guardian, Ghost, Taskmaster and John Walker -- embarks on a dangerous mission that forces them to confront the darkest corners of their pasts.',
-        'duration' => '2h 6m',
-        'rating' => 'PG-13',
-        'price' => 350,
-        'showtimes' => [
-            ['time' => '11:00 AM', 'seats' => 40],
-            ['time' => '2:30 PM', 'seats' => 35],
-            ['time' => '5:45 PM', 'seats' => 30],
-            ['time' => '9:00 PM', 'seats' => 25]
-        ]
-    ],
-    [
-        'id' => 3,
-        'title' => 'Karate Kid: The Legacy Continues',
-        'image' => '../assets/karate.jpg',
-        'description' => 'After kung fu prodigy Li Fong relocates to New York City, he attracts unwanted attention from a local karate champion and embarks on a journey to enter the ultimate karate competition with the help of Mr. Han and Daniel LaRusso.',
-        'duration' => '1h 34m',
-        'rating' => 'PG-13',
-        'price' => 350,
-        'showtimes' => [
-            ['time' => '10:30 AM', 'seats' => 50],
-            ['time' => '2:00 PM', 'seats' => 45],
-            ['time' => '5:15 PM', 'seats' => 40],
-            ['time' => '8:30 PM', 'seats' => 35]
-        ]
-    ]
-];
+// Fetch movies from the database
+$movies = [];
+$movieStmt = $pdo->query('SELECT * FROM movies');
+$moviesData = array_slice($movieStmt->fetchAll(), 0, 3); // Only show the first 3 movies
+
+foreach ($moviesData as $movieRow) {
+    $movie = [
+        'id' => $movieRow['movie_id'],
+        'title' => $movieRow['title'],
+        'image' => $movieRow['image_path'],
+        'description' => '', // Add description if you have it in DB
+        'duration' => '',    // Add duration if you have it in DB
+        'rating' => '',      // Add rating if you have it in DB
+        'price' => $movieRow['price'],
+        'showtimes' => []
+    ];
+    // Fetch showtimes for this movie
+    $showtimeStmt = $pdo->prepare('SELECT * FROM schedules WHERE movie_id = ? AND showdate = CURDATE()');
+    $showtimeStmt->execute([$movieRow['movie_id']]);
+    $showtimes = $showtimeStmt->fetchAll();
+    foreach ($showtimes as $showtimeRow) {
+        // Count booked seats for this schedule
+        $seatCountStmt = $pdo->prepare('SELECT COUNT(*) as booked FROM booked_seats WHERE schedule_id = ?');
+        $seatCountStmt->execute([$showtimeRow['schedule_id']]);
+        $booked = $seatCountStmt->fetch();
+        $totalSeats = 30; // Set your total seats per showtime here
+        $availableSeats = $totalSeats - $booked['booked'];
+        $movie['showtimes'][] = [
+            'schedule_id' => $showtimeRow['schedule_id'],
+            'time' => date('g:i A', strtotime($showtimeRow['showtime'])),
+            'seats' => $availableSeats
+        ];
+    }
+    $movies[] = $movie;
+}
 ?>
 
 <!DOCTYPE html>

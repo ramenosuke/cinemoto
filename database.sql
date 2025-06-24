@@ -48,8 +48,11 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE TABLE IF NOT EXISTS booked_seats (
     seat_id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NOT NULL,
+    schedule_id INT NOT NULL,
     seat_number VARCHAR(10) NOT NULL,
-    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id),
+    FOREIGN KEY (schedule_id) REFERENCES schedules(schedule_id),
+    UNIQUE (schedule_id, seat_number)
 );
 
 -- Insert sample movies
@@ -68,4 +71,4 @@ INSERT INTO schedules (movie_id, showtime, showdate) VALUES
 (2, '17:00:00', CURDATE()),
 (3, '12:00:00', CURDATE()),
 (3, '15:00:00', CURDATE()),
-(3, '18:00:00', CURDATE()); 
+(3, '18:00:00', CURDATE());

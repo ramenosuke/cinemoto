@@ -1,5 +1,7 @@
 <?php
 session_start();
+require_once '../includes/db_connect.php';
+require_once '../includes/auth_check.php';
 
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     header("Location: cart.php");
@@ -11,6 +13,7 @@ $name = $_POST['name'] ?? '';
 $email = $_POST['email'] ?? '';
 $phone = $_POST['phone'] ?? '';
 $payment_method = $_POST['payment_method'] ?? '';
+$user_id = $_SESSION['user_id'] ?? null;
 
 if ($payment_method === 'gcash') {
     $gcash_number = $_POST['gcash_number'] ?? '';
@@ -33,6 +36,27 @@ foreach ($tickets as $ticket) {
 
 // Generate ticket number
 $ticket_number = 'TIX-' . strtoupper(substr(uniqid(), -6));
+
+// --- BOOKING LOGIC ---
+if ($user_id) {
+    foreach ($tickets as $ticket) {
+        // Insert booking
+        $stmt = $pdo->prepare('INSERT INTO bookings (user_id, schedule_id, total_price, status) VALUES (?, ?, ?, ?)');
+        $stmt->execute([
+            $user_id,
+            $ticket['schedule_id'],
+            $ticket['price'] * $ticket['quantity'],
+            'confirmed'
+        ]);
+        $booking_id = $pdo->lastInsertId();
+        // Insert booked seats
+        foreach ($ticket['seat_array'] as $seat) {
+            $stmt2 = $pdo->prepare('INSERT IGNORE INTO booked_seats (booking_id, schedule_id, seat_number) VALUES (?, ?, ?)');
+            $stmt2->execute([$booking_id, $ticket['schedule_id'], $seat]);
+        }
+    }
+}
+// --- END BOOKING LOGIC ---
 
 // Clear the cart after successful checkout
 $_SESSION['cart'] = [];
