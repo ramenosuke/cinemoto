@@ -23,8 +23,8 @@ $movie = [
     'synopsis' => '' // Add if you have it in DB
 ];
 
-// Get schedule_id for this movie and showtime (today)
-$scheduleStmt = $pdo->prepare('SELECT * FROM schedules WHERE movie_id = ? AND showtime = ? AND showdate = CURDATE()');
+// Get schedule_id for this movie and showtime (no showdate column)
+$scheduleStmt = $pdo->prepare('SELECT * FROM schedules WHERE movie_id = ? AND showtime = ?');
 $scheduleStmt->execute([$movie_id, date('H:i:s', strtotime($showtime))]);
 $schedule = $scheduleStmt->fetch();
 if (!$schedule) {

@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS schedules (
     schedule_id INT PRIMARY KEY AUTO_INCREMENT,
     movie_id INT NOT NULL,
     showtime TIME NOT NULL,
-    showdate DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id)
 );
@@ -62,13 +61,13 @@ INSERT INTO movies (title, image_path, price) VALUES
 ('Karate Kid', '../assets/karate.jpg', 350.00);
 
 -- Insert sample schedules
-INSERT INTO schedules (movie_id, showtime, showdate) VALUES
-(1, '10:00:00', CURDATE()),
-(1, '13:00:00', CURDATE()),
-(1, '16:00:00', CURDATE()),
-(2, '11:00:00', CURDATE()),
-(2, '14:00:00', CURDATE()),
-(2, '17:00:00', CURDATE()),
-(3, '12:00:00', CURDATE()),
-(3, '15:00:00', CURDATE()),
-(3, '18:00:00', CURDATE());
+INSERT INTO schedules (movie_id, showtime) VALUES
+(1, '10:00:00'),
+(1, '13:00:00'),
+(1, '16:00:00'),
+(2, '11:00:00'),
+(2, '14:00:00'),
+(2, '17:00:00'),
+(3, '12:00:00'),
+(3, '15:00:00'),
+(3, '18:00:00');

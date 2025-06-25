@@ -1,8 +1,10 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../includes/auth_check.php';
 require_once '../includes/db_connect.php';
-
-session_start();
 
 // Fetch movies from the database
 $movies = [];
@@ -20,8 +22,8 @@ foreach ($moviesData as $movieRow) {
         'price' => $movieRow['price'],
         'showtimes' => []
     ];
-    // Fetch showtimes for this movie
-    $showtimeStmt = $pdo->prepare('SELECT * FROM schedules WHERE movie_id = ? AND showdate = CURDATE()');
+    // Fetch showtimes for this movie (no showdate column)
+    $showtimeStmt = $pdo->prepare('SELECT * FROM schedules WHERE movie_id = ? ORDER BY showtime');
     $showtimeStmt->execute([$movieRow['movie_id']]);
     $showtimes = $showtimeStmt->fetchAll();
     foreach ($showtimes as $showtimeRow) {
@@ -29,11 +31,11 @@ foreach ($moviesData as $movieRow) {
         $seatCountStmt = $pdo->prepare('SELECT COUNT(*) as booked FROM booked_seats WHERE schedule_id = ?');
         $seatCountStmt->execute([$showtimeRow['schedule_id']]);
         $booked = $seatCountStmt->fetch();
-        $totalSeats = 30; // Set your total seats per showtime here
+        $totalSeats = 100; // Set your total seats per showtime here
         $availableSeats = $totalSeats - $booked['booked'];
         $movie['showtimes'][] = [
             'schedule_id' => $showtimeRow['schedule_id'],
-            'time' => date('g:i A', strtotime($showtimeRow['showtime'])),
+            'time' => date('g:i A',  strtotime($showtimeRow['showtime'])),
             'seats' => $availableSeats
         ];
     }
