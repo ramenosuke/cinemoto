@@ -83,6 +83,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="password" id="password" name="password" required>
                 </div>
 
+                <div class="form-group">
+                    <label for="region">Region</label>
+                    <select id="region" name="region" class="form-control" required>
+                        <option selected disabled>Select Region</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="province">Province</label>
+                    <select id="province" name="province" class="form-control" required>
+                        <option selected disabled>Select Province</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="city">City/Municipality</label>
+                    <select id="city" name="city" class="form-control" required>
+                        <option selected disabled>Select City/Municipality</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="barangay">Barangay</label>
+                    <select id="barangay" name="barangay" class="form-control" required>
+                        <option selected disabled>Select Barangay</option>
+                    </select>
+                </div>
+
                 <button type="submit" class="auth-button">Sign Up</button>
             </form>
 
@@ -93,5 +118,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php include '../includes/cinema_footer.php'; ?>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(function() {
+        // Populate regions from SQL
+        $.getJSON('location_api.php?type=region', function(data) {
+            data.forEach(function(r) {
+                $('#region').append(`<option value="${r.code}">${r.name}</option>`);
+            });
+        });
+
+        // On region change, load provinces
+        $('#region').on('change', function() {
+            const code = $(this).val();
+            $('#province').html('<option selected disabled>Select Province</option>');
+            $('#city').html('<option selected disabled>Select City/Municipality</option>');
+            $('#barangay').html('<option selected disabled>Select Barangay</option>');
+            if (code) {
+                $.getJSON('location_api.php?type=province&parent=' + code, function(data) {
+                    data.forEach(function(p) {
+                        $('#province').append(`<option value="${p.code}">${p.name}</option>`);
+                    });
+                });
+            }
+        });
+
+        // On province change, load cities/municipalities
+        $('#province').on('change', function() {
+            const code = $(this).val();
+            $('#city').html('<option selected disabled>Select City/Municipality</option>');
+            $('#barangay').html('<option selected disabled>Select Barangay</option>');
+            if (code) {
+                $.getJSON('location_api.php?type=city&parent=' + code, function(data) {
+                    data.forEach(function(c) {
+                        $('#city').append(`<option value="${c.code}">${c.name}</option>`);
+                    });
+                });
+            }
+        });
+
+        // On city change, load barangays
+        $('#city').on('change', function() {
+            const code = $(this).val();
+            $('#barangay').html('<option selected disabled>Select Barangay</option>');
+            if (code) {
+                $.getJSON('location_api.php?type=barangay&parent=' + code, function(data) {
+                    data.forEach(function(b) {
+                        $('#barangay').append(`<option value="${b.code}">${b.name}</option>`);
+                    });
+                });
+            }
+        });
+    });
+    </script>
 </body>
-</html> 
+</html>
