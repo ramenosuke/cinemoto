@@ -27,12 +27,12 @@ body {
 .auth-container {
     width: 100%;
     max-width: 450px;
-    padding: 2rem;
+    padding: 6rem 2rem 2rem;
     perspective: 1000px;
     min-height: 80vh; /* Ensures space between header and footer */
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Pushes the box lower */
+    justify-content: flex-start; /* Aligns content to the top */
     align-items: center;
 }
 

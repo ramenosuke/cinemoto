@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
     $(function() {
         // Populate regions from SQL
-        $.getJSON('location_api.php?type=region', function(data) {
+        $.getJSON('../includes/location_api.php?type=region', function(data) {
             data.forEach(function(r) {
                 $('#region').append(`<option value="${r.code}">${r.name}</option>`);
             });
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $('#city').html('<option selected disabled>Select City/Municipality</option>');
             $('#barangay').html('<option selected disabled>Select Barangay</option>');
             if (code) {
-                $.getJSON('location_api.php?type=province&parent=' + code, function(data) {
+                $.getJSON('../includes/location_api.php?type=province&parent=' + code, function(data) {
                     data.forEach(function(p) {
                         $('#province').append(`<option value="${p.code}">${p.name}</option>`);
                     });
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $('#city').html('<option selected disabled>Select City/Municipality</option>');
             $('#barangay').html('<option selected disabled>Select Barangay</option>');
             if (code) {
-                $.getJSON('location_api.php?type=city&parent=' + code, function(data) {
+                $.getJSON('../includes/location_api.php?type=city&parent=' + code, function(data) {
                     data.forEach(function(c) {
                         $('#city').append(`<option value="${c.code}">${c.name}</option>`);
                     });
@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const code = $(this).val();
             $('#barangay').html('<option selected disabled>Select Barangay</option>');
             if (code) {
-                $.getJSON('location_api.php?type=barangay&parent=' + code, function(data) {
+                $.getJSON('../includes/location_api.php?type=barangay&parent=' + code, function(data) {
                     data.forEach(function(b) {
                         $('#barangay').append(`<option value="${b.code}">${b.name}</option>`);
                     });

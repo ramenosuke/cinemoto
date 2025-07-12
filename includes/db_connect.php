@@ -2,7 +2,7 @@
 // Database configuration
 $config = [
     'host' => 'localhost', // Change this to your server's IP address for remote access
-    'dbname' => 'plantitos_cinema',
+    'dbname' => 'cinemoto',
     'username' => 'root', // Use 'remote_user' for remote connections
     'password' => '', // Use the password you set for remote_user
     'port' => 3306 // Default MySQL port

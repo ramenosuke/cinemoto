@@ -106,7 +106,7 @@
 
 <header>
     <div class="header-content">
-        <a href="movies.php" class="logo">Cinema</a>
+        <a href="movies.php" class="logo">Cinemoto</a>
         <nav class="nav-menu">
             <?php if (isset($_SESSION['user_id'])): ?>
                 <a href="movies.php">Movies</a>

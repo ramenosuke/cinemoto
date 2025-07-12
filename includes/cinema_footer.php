@@ -11,8 +11,8 @@ $currentYear = date('Y');
         <div class="footer-section">
             <h3>Quick Links</h3>
             <ul>
-                <li><a href="/pages/movies.php">Now Showing</a></li>
-                <li><a href="/pages/cart.php">Your Cart</a></li>
+                <li><a href="../pages/movies.php">Now Showing</a></li>
+                <li><a href="../pages/cart.php">Cart</a></li>
                 <li><a href="#">Coming Soon</a></li>
                 <li><a href="#">Contact Us</a></li>
             </ul>
